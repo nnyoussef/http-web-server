@@ -63,7 +63,7 @@ public class WebServerRestController {
                 String fileExtension = filePathContent[filePathContent.length - 2];
                 ResponseEntity<Flux<DataBuffer>> responseEntity = ok()
                         .headers(httpHeadersMap.get(fileExtension))
-                        .body(read(resource, dataBufferFactory, 10_048_576));
+                        .body(read(resource, dataBufferFactory, 10_048_576).cache());
                 cache.put(requestPath, responseEntity);
                 return responseEntity;
             }).subscribeOn(boundedElastic());
