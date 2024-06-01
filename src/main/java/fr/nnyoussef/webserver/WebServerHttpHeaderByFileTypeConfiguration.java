@@ -22,6 +22,7 @@ public class WebServerHttpHeaderByFileTypeConfiguration {
                 new SimpleEntry<>("js", getHttpHeaders(parseMediaType("text/javascript"))),
                 new SimpleEntry<>("webp", getHttpHeaders(parseMediaType("image/webp"))),
                 new SimpleEntry<>("json", getHttpHeaders(APPLICATION_JSON)),
+                new SimpleEntry<>("ico", getHttpHeaders(parseMediaType("image/x-icon"))),
                 new SimpleEntry<>("css", getHttpHeaders(parseMediaType("text/css"))));
     }
 

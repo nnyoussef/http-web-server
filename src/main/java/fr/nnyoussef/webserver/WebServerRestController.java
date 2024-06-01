@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.lang.String.format;
 import static java.nio.file.Path.of;
 import static org.springframework.core.io.buffer.DataBufferUtils.read;
 import static org.springframework.http.HttpStatus.PERMANENT_REDIRECT;
@@ -44,10 +45,8 @@ public class WebServerRestController {
     public Mono<ResponseEntity<Flux<DataBuffer>>> downloadFile(ServerWebExchange serverWebExchange) {
         String requestPath = serverWebExchange.getRequest().getPath().toString();
         ResponseEntity<Flux<DataBuffer>> response = cache.get(requestPath);
-
-        if (response != null) {
+        if (response != null)
             return just(cache.get(requestPath));
-        }
 
         StringBuilder fileSystemPath = new StringBuilder(requestPath);
         if (requestPath.equals("/"))
@@ -57,9 +56,8 @@ public class WebServerRestController {
         Resource resource = new FileSystemResource(of(basePath, fileSystemPath.toString()));
 
         if (resource.exists()) {
-            String finalPath = fileSystemPath.toString();
             return fromSupplier(() -> {
-                String[] filePathContent = finalPath.split("[.]");
+                String[] filePathContent = fileSystemPath.toString().split("[.]");
                 String fileExtension = filePathContent[filePathContent.length - 2];
                 ResponseEntity<Flux<DataBuffer>> responseEntity = ok()
                         .headers(httpHeadersMap.get(fileExtension))
@@ -68,10 +66,14 @@ public class WebServerRestController {
                 return responseEntity;
             }).subscribeOn(boundedElastic());
         } else {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Location", "/?redirected&path=".concat(requestPath));
-            return just(new ResponseEntity<>(headers, PERMANENT_REDIRECT));
+            ResponseEntity<Flux<DataBuffer>> responseEntity = cache.get("/");
+            if (responseEntity != null)
+                return just(ok().headers(httpHeadersMap.get("html")).body(responseEntity.getBody()));
+            else {
+                HttpHeaders headers = new HttpHeaders();
+                headers.add("Location", format("/?redirected&path=%s", requestPath));
+                return just(new ResponseEntity<>(headers, PERMANENT_REDIRECT));
+            }
         }
     }
-
 }
