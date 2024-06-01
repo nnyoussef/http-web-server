@@ -35,7 +35,7 @@ public class WebServerRestController {
     private final DefaultDataBufferFactory dataBufferFactory = new DefaultDataBufferFactory();
 
     @Value("${web.application.basepath}")
-    String basePath;
+    private String basePath;
 
     public WebServerRestController(Map<String, HttpHeaders> httpHeadersMap) {
         this.httpHeadersMap = httpHeadersMap;
@@ -64,7 +64,7 @@ public class WebServerRestController {
                         .body(read(resource, dataBufferFactory, 10_048_576).cache());
                 cache.put(requestPath, responseEntity);
                 return responseEntity;
-            }).subscribeOn(boundedElastic());
+            }).subscribeOn(boundedElastic()).cache();
         } else {
             ResponseEntity<Flux<DataBuffer>> responseEntity = cache.get("/");
             if (responseEntity != null)
