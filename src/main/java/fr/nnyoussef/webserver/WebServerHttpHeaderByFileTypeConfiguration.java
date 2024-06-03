@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Map;
 
+import static java.util.Map.ofEntries;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static org.springframework.http.MediaType.*;
 
@@ -17,7 +18,7 @@ public class WebServerHttpHeaderByFileTypeConfiguration {
 
     @Bean()
     public Map<String, HttpHeaders> get() {
-        return Map.ofEntries(
+        return ofEntries(
                 new SimpleEntry<>("html", getHttpHeaders(TEXT_HTML)),
                 new SimpleEntry<>("js", getHttpHeaders(parseMediaType("text/javascript"))),
                 new SimpleEntry<>("webp", getHttpHeaders(parseMediaType("image/webp"))),
