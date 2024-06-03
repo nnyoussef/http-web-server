@@ -23,6 +23,12 @@ public class WebServerHttpHeaderByFileTypeConfiguration {
                 new SimpleEntry<>("webp", getHttpHeaders(parseMediaType("image/webp"))),
                 new SimpleEntry<>("json", getHttpHeaders(APPLICATION_JSON)),
                 new SimpleEntry<>("ico", getHttpHeaders(parseMediaType("image/x-icon"))),
+                new SimpleEntry<>("jpeg", getHttpHeaders(IMAGE_JPEG)),
+                new SimpleEntry<>("png", getHttpHeaders(IMAGE_PNG)),
+                new SimpleEntry<>("gif", getHttpHeaders(IMAGE_GIF)),
+                new SimpleEntry<>("txt", getHttpHeaders(TEXT_PLAIN)),
+                new SimpleEntry<>("xml", getHttpHeaders(TEXT_XML)),
+                new SimpleEntry<>("pdf", getHttpHeaders(APPLICATION_PDF)),
                 new SimpleEntry<>("css", getHttpHeaders(parseMediaType("text/css"))));
     }
 
