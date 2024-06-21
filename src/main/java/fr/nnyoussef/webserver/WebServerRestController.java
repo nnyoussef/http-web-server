@@ -1,5 +1,6 @@
 package fr.nnyoussef.webserver;
 
+import com.google.common.collect.ImmutableMap;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.FileSystemResource;
@@ -15,9 +16,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static java.lang.String.format;
+import static java.net.URI.create;
 import static java.nio.file.Path.of;
 import static org.springframework.core.io.buffer.DataBufferUtils.read;
 import static org.springframework.http.HttpStatus.PERMANENT_REDIRECT;
@@ -30,7 +31,7 @@ import static reactor.core.scheduler.Schedulers.boundedElastic;
 @RestController
 public class WebServerRestController {
 
-    private final ConcurrentHashMap<String, ResponseEntity<Flux<DataBuffer>>> cache = new ConcurrentHashMap<>(300);
+    private ImmutableMap<String, Mono<ResponseEntity<Flux<DataBuffer>>>> cache = ImmutableMap.of();
     private final Map<String, HttpHeaders> httpHeadersMap;
     private final DefaultDataBufferFactory dataBufferFactory = new DefaultDataBufferFactory();
 
@@ -44,9 +45,9 @@ public class WebServerRestController {
     @GetMapping("**")
     public Mono<ResponseEntity<Flux<DataBuffer>>> downloadFile(ServerWebExchange serverWebExchange) {
         String requestPath = serverWebExchange.getRequest().getPath().toString();
-        ResponseEntity<Flux<DataBuffer>> response = cache.get(requestPath);
+        Mono<ResponseEntity<Flux<DataBuffer>>> response = cache.get(requestPath);
         if (response != null)
-            return just(cache.get(requestPath));
+            return response;
 
         StringBuilder fileSystemPath = new StringBuilder(requestPath);
         if (requestPath.equals("/"))
@@ -54,7 +55,6 @@ public class WebServerRestController {
         fileSystemPath.append(".br");
 
         Resource resource = new FileSystemResource(of(basePath, fileSystemPath.toString()));
-
         if (resource.exists()) {
             return fromSupplier(() -> {
                 String[] filePathContent = fileSystemPath.toString().split("[.]");
@@ -62,16 +62,20 @@ public class WebServerRestController {
                 ResponseEntity<Flux<DataBuffer>> responseEntity = ok()
                         .headers(httpHeadersMap.get(fileExtension))
                         .body(read(resource, dataBufferFactory, 10_048_576).cache());
-                cache.put(requestPath, responseEntity);
+
+                cache = ImmutableMap.<String, Mono<ResponseEntity<Flux<DataBuffer>>>>builder()
+                        .putAll(cache)
+                        .put(requestPath, just(responseEntity))
+                        .build();
                 return responseEntity;
             }).subscribeOn(boundedElastic()).cache();
         } else {
-            ResponseEntity<Flux<DataBuffer>> responseEntity = cache.get("/");
+            Mono<ResponseEntity<Flux<DataBuffer>>> responseEntity = cache.get("/");
             if (responseEntity != null)
-                return just(ok().headers(httpHeadersMap.get("html")).body(responseEntity.getBody()));
+                return just(ok().headers(httpHeadersMap.get("html")).body(responseEntity.block().getBody()));
             else {
                 HttpHeaders headers = new HttpHeaders();
-                headers.add("Location", format("/?redirected&path=%s", requestPath));
+                headers.setLocation(create(format("/?redirected&path=%s", requestPath)));
                 return just(new ResponseEntity<>(headers, PERMANENT_REDIRECT));
             }
         }

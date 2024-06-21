@@ -14,18 +14,7 @@ import org.springframework.boot.autoconfigure.validation.ValidationAutoConfigura
 import org.springframework.boot.autoconfigure.webservices.client.WebServiceTemplateAutoConfiguration;
 import org.springframework.boot.autoconfigure.websocket.servlet.WebSocketMessagingAutoConfiguration;
 
-@EnableAutoConfiguration(exclude = {
-        JacksonAutoConfiguration.class,
-        XADataSourceAutoConfiguration.class,
-        WebSocketMessagingAutoConfiguration.class,
-        WebServiceTemplateAutoConfiguration.class,
-        ValidationAutoConfiguration.class,
-        UserDetailsServiceAutoConfiguration.class,
-        TransactionManagerCustomizationAutoConfiguration.class,
-        SqlInitializationAutoConfiguration.class,
-        CodecsAutoConfiguration.class,
-        SslAutoConfiguration.class
-})
+
 @SpringBootApplication
 public class WebServerApplication {
 
